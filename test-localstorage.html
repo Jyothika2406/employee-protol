@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LocalStorage Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>LocalStorage Test for Money Transactions</h1>
+    
+    <div>
+        <button onclick="addTransaction()">Add Test Transaction</button>
+        <button onclick="viewTransactions()">View All Transactions</button>
+        <button onclick="clearTransactions()">Clear All Transactions</button>
+    </div>
+    
+    <div id="output"></div>
+    
+    <script>
+        function addTransaction() {
+            try {
+                // Get existing transactions
+                const existing = localStorage.getItem('mockMoneyTransactions');
+                const transactions = existing ? JSON.parse(existing) : [];
+                
+                // Create new transaction
+                const newTransaction = {
+                    id: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    transactionId: `TXN-${Date.now()}`,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'credit',
+                    amount: Math.floor(Math.random() * 10000) + 1000,
+                    mode: 'phonepe',
+                    category: 'Test Payment',
+                    notes: 'Test transaction ' + new Date().toLocaleTimeString(),
+                    createdAt: new Date().toISOString(),
+                    createdBy: 'test-user',
+                    createdByName: 'Test User',
+                    createdByRole: 'employee'
+                };
+                
+                // Add to array
+                transactions.push(newTransaction);
+                
+                // Save to localStorage
+                localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
+                
+                // Verify
+                const verification = localStorage.getItem('mockMoneyTransactions');
+                const verified = JSON.parse(verification);
+                
+                document.getElementById('output').innerHTML = `
+                    <div class="success">
+                        <h3>✅ Transaction Added Successfully!</h3>
+                        <p>Total transactions: ${verified.length}</p>
+                        <p>New transaction ID: ${newTransaction.id}</p>
+                        <pre>${JSON.stringify(newTransaction, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error Adding Transaction</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function viewTransactions() {
+            try {
+                const stored = localStorage.getItem('mockMoneyTransactions');
+                const transactions = stored ? JSON.parse(stored) : [];
+                
+                document.getElementById('output').innerHTML = `
+                    <div>
+                        <h3>📊 All Transactions (${transactions.length})</h3>
+                        <pre>${JSON.stringify(transactions, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('output').innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error Reading Transactions</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function clearTransactions() {
+            if (confirm('Are you sure you want to clear all transactions?')) {
+                localStorage.removeItem('mockMoneyTransactions');
+                document.getElementById('output').innerHTML = `
+                    <div class="success">
+                        <h3>✅ All Transactions Cleared</h3>
+                    </div>
+                `;
+            }
+        }
+        
+        // Auto-load on page load
+        window.onload = function() {
+            viewTransactions();
+        };
+    </script>
+</body>
+</html>

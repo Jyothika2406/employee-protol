@@ -1,12 +1,20 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const { initializeFirebase, db } = require('../config/firebase');
+const { initializeFirebase, getDb } = require('../config/firebase');
 
 const seedDatabase = async () => {
   try {
     console.log('🌱 Starting database seeding...');
 
     initializeFirebase();
+    
+    // Get db instance after initialization
+    const db = getDb();
+    
+    if (!db) {
+      console.error('❌ Firebase database not initialized');
+      process.exit(1);
+    }
 
     // Check if users already exist
     const adminCheck = await db.collection('users').where('email', '==', 'admin@company.com').get();

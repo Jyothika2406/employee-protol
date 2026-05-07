@@ -312,11 +312,19 @@ class ApiClient {
   async getMoneyTransactions() {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const transactions = JSON.parse(localStorage.getItem('mockMoneyTransactions') || '[]');
+        const stored = localStorage.getItem('mockMoneyTransactions');
+        console.log('[API] Getting money transactions from localStorage:', stored);
+        
+        const transactions = JSON.parse(stored || '[]');
+        console.log('[API] Parsed transactions, count:', transactions.length);
+        
         const normalized = transactions.map((transaction: any) => ({
           ...transaction,
           transactionId: transaction.transactionId || `TXN-${String(transaction.id || '').slice(-8).padStart(8, '0')}`,
         }));
+        
+        console.log('[API] Normalized transactions, count:', normalized.length);
+        
         localStorage.setItem('mockMoneyTransactions', JSON.stringify(normalized));
         resolve({ transactions: normalized });
       }, 300);
@@ -324,37 +332,73 @@ class ApiClient {
   }
 
   async addMoneyTransaction(data: any) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const transactions = JSON.parse(localStorage.getItem('mockMoneyTransactions') || '[]');
-        const newTransaction = {
-          id: Date.now().toString(),
-          transactionId: this.generateTransactionId(),
-          ...data,
-          createdAt: new Date().toISOString(),
-        };
-        transactions.push(newTransaction);
-        localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
-        resolve({ success: true, transaction: newTransaction });
+        try {
+          console.log('[API] Adding money transaction:', data);
+          
+          // Get existing transactions
+          const existingTransactions = localStorage.getItem('mockMoneyTransactions');
+          console.log('[API] Existing transactions from localStorage:', existingTransactions);
+          
+          const transactions = existingTransactions ? JSON.parse(existingTransactions) : [];
+          console.log('[API] Parsed transactions array, length:', transactions.length);
+          
+          // Create new transaction with unique ID
+          const newTransaction = {
+            id: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            transactionId: this.generateTransactionId(),
+            ...data,
+            createdAt: new Date().toISOString(),
+          };
+          
+          console.log('[API] New transaction created:', newTransaction);
+          
+          // Add to array (not replace)
+          transactions.push(newTransaction);
+          console.log('[API] Transaction added to array, new length:', transactions.length);
+          
+          // Save back to localStorage
+          localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
+          console.log('[API] Saved to localStorage');
+          
+          // Verify it was saved
+          const verification = localStorage.getItem('mockMoneyTransactions');
+          const verifiedTransactions = verification ? JSON.parse(verification) : [];
+          console.log('[API] Verification: localStorage now has', verifiedTransactions.length, 'transactions');
+          
+          resolve({ success: true, transaction: newTransaction });
+        } catch (error) {
+          console.error('[API] Error adding transaction:', error);
+          reject(error);
+        }
       }, 300);
     });
   }
 
   async updateMoneyTransaction(id: string, data: any) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const transactions = JSON.parse(localStorage.getItem('mockMoneyTransactions') || '[]');
-        const index = transactions.findIndex((t: any) => t.id === id);
-        if (index > -1) {
-          transactions[index] = {
-            ...transactions[index],
-            ...data,
-            updatedAt: new Date().toISOString(),
-          };
-          localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
-          resolve({ success: true, transaction: transactions[index] });
-        } else {
-          resolve({ success: false, error: 'Transaction not found' });
+        try {
+          const existingTransactions = localStorage.getItem('mockMoneyTransactions');
+          const transactions = existingTransactions ? JSON.parse(existingTransactions) : [];
+          
+          const index = transactions.findIndex((t: any) => t.id === id);
+          if (index > -1) {
+            transactions[index] = {
+              ...transactions[index],
+              ...data,
+              updatedAt: new Date().toISOString(),
+            };
+            localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
+            console.log('Transaction updated:', transactions[index]);
+            resolve({ success: true, transaction: transactions[index] });
+          } else {
+            reject(new Error('Transaction not found'));
+          }
+        } catch (error) {
+          console.error('Error updating transaction:', error);
+          reject(error);
         }
       }, 300);
     });

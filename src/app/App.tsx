@@ -669,22 +669,19 @@ export default function App() {
   };
 
   const uploadMoneyProofToCloudinary = async (file: File) => {
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      throw new Error('Cloudinary is not configured. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.');
-    }
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body: formData,
+    // Instead of uploading to Cloudinary, convert to base64 and store locally
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        console.log('Image converted to base64, size:', base64String.length);
+        resolve(base64String);
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read image file'));
+      };
+      reader.readAsDataURL(file);
     });
-    const data = await response.json();
-    if (!response.ok || !data?.secure_url) {
-      throw new Error(data?.error?.message || 'Failed to upload screenshot to Cloudinary');
-    }
-    return data.secure_url as string;
   };
 
   const handleSaveMoneyTransaction = async (e: React.FormEvent) => {
@@ -709,10 +706,18 @@ export default function App() {
       let proofImageUrl = moneyForm.proofImageUrl;
       if (moneyProofFile) {
         setMoneyProofUploading(true);
-        proofImageUrl = await uploadMoneyProofToCloudinary(moneyProofFile);
+        try {
+          proofImageUrl = await uploadMoneyProofToCloudinary(moneyProofFile);
+          console.log('Image uploaded successfully:', proofImageUrl);
+        } catch (uploadErr: any) {
+          setMoneyProofUploading(false);
+          setError('Failed to upload image: ' + uploadErr.message);
+          return;
+        }
       }
       if (user.role === 'employee' && !proofImageUrl) {
         setError('Payment screenshot is required for employee submissions');
+        setMoneyProofUploading(false);
         return;
       }
 
@@ -729,16 +734,27 @@ export default function App() {
         createdByRole: user.role,
       };
 
+      console.log('Saving transaction with payload:', payload);
+
       if (editingMoneyId) {
-        await apiClient.updateMoneyTransaction(editingMoneyId, payload);
+        const result = await apiClient.updateMoneyTransaction(editingMoneyId, payload);
+        console.log('Update result:', result);
         setSuccess('Money transaction updated successfully.');
       } else {
-        await apiClient.addMoneyTransaction(payload);
+        const result = await apiClient.addMoneyTransaction(payload);
+        console.log('Add result:', result);
         setSuccess('Money transaction added successfully.');
       }
+      
+      // Wait a bit to ensure localStorage is updated
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       resetMoneyForm();
-      loadDashboard();
+      await loadDashboard();
+      
+      console.log('Transaction saved and dashboard reloaded');
     } catch (err: any) {
+      console.error('Error saving transaction:', err);
       setError(err.message || 'Failed to save money transaction');
     } finally {
       setMoneyProofUploading(false);
@@ -801,25 +817,21 @@ export default function App() {
   // ===== COMPANY EXPENSE HANDLERS =====
   const uploadExpensePhotoToCloudinary = async (file: File) => {
     if (!file) return null;
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      setError('Cloudinary config missing. Check your .env file.');
-      return null;
-    }
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      return data.secure_url;
-    } catch (err) {
-      setError('Photo upload failed');
-      return null;
-    }
+    
+    // Convert to base64 instead of uploading to Cloudinary
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        console.log('Expense photo converted to base64, size:', base64String.length);
+        resolve(base64String);
+      };
+      reader.onerror = () => {
+        setError('Failed to read photo file');
+        reject(new Error('Failed to read photo file'));
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleExpensePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -6,7 +6,7 @@ let auth;
 const initializeFirebase = () => {
   try {
     // Check if Firebase credentials are configured
-    if (!process.env.FIREBASE_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY.includes('BEGIN PRIVATE KEY')) {
+    if (!process.env.FIREBASE_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY.includes('your_private_key_here')) {
       console.log('⚠️  Firebase credentials not configured. Configure .env with your Firebase service account credentials.');
       console.log('📝 See backend/QUICKSTART.md or SETUP_GUIDE.md for Firebase setup instructions.');
       return;
