@@ -1,0 +1,43 @@
+========================================
+  PUSH CODE TO GITHUB - DO THIS NOW
+========================================
+
+STEP 1: Open PowerShell
+------------------------
+- Press Windows Key
+- Type "PowerShell"
+- Press Enter
+
+STEP 2: Copy and Paste These Commands
+--------------------------------------
+Copy this entire block and paste into PowerShell:
+
+cd "C:\Users\M Sravani\Desktop\employee protol\employee-protol"
+git push origin main
+
+STEP 3: Enter Credentials When Prompted
+----------------------------------------
+Username: Jyothika2406
+Password: [Your GitHub password or Personal Access Token]
+
+If you don't have a token:
+1. Go to: https://github.com/settings/tokens
+2. Click "Generate new token (classic)"
+3. Check "repo" box
+4. Click "Generate token"
+5. Copy the token
+6. Use it as password
+
+========================================
+THAT'S IT! CODE WILL BE PUSHED!
+========================================
+
+After pushing, verify at:
+https://github.com/Jyothika2406/employee-protol
+
+You should see:
+- 3 new commits
+- Updated files
+- New documentation files
+
+========================================

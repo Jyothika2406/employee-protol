@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Verification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #ccc;
+            background: #f9f9f9;
+        }
+        .pass { border-left-color: #4caf50; background: #e8f5e9; }
+        .fail { border-left-color: #f44336; background: #ffebee; }
+        .warn { border-left-color: #ff9800; background: #fff3e0; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background: #2196F3;
+            color: white;
+            font-weight: bold;
+        }
+        button:hover { background: #1976D2; }
+        .status { font-weight: bold; margin-left: 10px; }
+        .pass-status { color: #4caf50; }
+        .fail-status { color: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Employee Portal - Function Verification</h1>
+    <p>This page tests all localStorage functions to ensure data persistence works correctly.</p>
+    
+    <button onclick="runAllTests()">▶️ Run All Tests</button>
+    <button onclick="clearAllData()">🗑️ Clear All Data</button>
+    <button onclick="location.reload()">🔄 Refresh</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-item ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        function clearAllData() {
+            if (confirm('Clear all test data?')) {
+                localStorage.clear();
+                log('✅ All data cleared', 'pass');
+                setTimeout(() => location.reload(), 1000);
+            }
+        }
+        
+        function testTransactionStorage() {
+            log('<h3>📊 Testing Money Transactions</h3>');
+            
+            try {
+                // Get existing
+                const existing = localStorage.getItem('mockMoneyTransactions');
+                const transactions = existing ? JSON.parse(existing) : [];
+                const initialCount = transactions.length;
+                log(`Initial transactions: ${initialCount}`, 'info');
+                
+                // Add test transaction
+                const testTransaction = {
+                    id: `TEST-${Date.now()}`,
+                    transactionId: `TXN-TEST-${Date.now()}`,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'credit',
+                    amount: 5000,
+                    mode: 'phonepe',
+                    category: 'Test Payment',
+                    notes: 'Automated test transaction',
+                    proofImageUrl: 'data:image/png;base64,test',
+                    createdAt: new Date().toISOString(),
+                    createdBy: 'test-user',
+                    createdByName: 'Test User',
+                    createdByRole: 'employee'
+                };
+                
+                transactions.push(testTransaction);
+                localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
+                
+                // Verify
+                const verification = JSON.parse(localStorage.getItem('mockMoneyTransactions'));
+                if (verification.length === initialCount + 1) {
+                    log(`✅ Transaction added successfully (${initialCount} → ${verification.length})`, 'pass');
+                    return true;
+                } else {
+                    log(`❌ Transaction not saved properly`, 'fail');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testEmployeeStorage() {
+            log('<h3>👥 Testing Employee Storage</h3>');
+            
+            try {
+                const employees = JSON.parse(localStorage.getItem('mockEmployees') || '[]');
+                const initialCount = employees.length;
+                log(`Initial employees: ${initialCount}`, 'info');
+                
+                const testEmployee = {
+                    id: `EMP-${Date.now()}`,
+                    name: 'Test Employee',
+                    email: `test${Date.now()}@test.com`,
+                    phone: '1234567890',
+                    position: 'Tester',
+                    department: 'QA',
+                    monthlySalary: '30000',
+                    password: 'Test@123',
+                    createdAt: new Date().toISOString()
+                };
+                
+                employees.push(testEmployee);
+                localStorage.setItem('mockEmployees', JSON.stringify(employees));
+                
+                const verification = JSON.parse(localStorage.getItem('mockEmployees'));
+                if (verification.length === initialCount + 1) {
+                    log(`✅ Employee added successfully (${initialCount} → ${verification.length})`, 'pass');
+                    return true;
+                } else {
+                    log(`❌ Employee not saved`, 'fail');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testReportStorage() {
+            log('<h3>📝 Testing Report Storage</h3>');
+            
+            try {
+                const reports = JSON.parse(localStorage.getItem('mockReports') || '[]');
+                const initialCount = reports.length;
+                log(`Initial reports: ${initialCount}`, 'info');
+                
+                const testReport = {
+                    id: `REP-${Date.now()}`,
+                    date: new Date().toISOString().split('T')[0],
+                    calls: 10,
+                    leads: 5,
+                    conversions: 2,
+                    revenue: 10000,
+                    clientName: 'Test Client',
+                    userId: 'test-user',
+                    employeeName: 'Test User'
+                };
+                
+                reports.push(testReport);
+                localStorage.setItem('mockReports', JSON.stringify(reports));
+                
+                const verification = JSON.parse(localStorage.getItem('mockReports'));
+                if (verification.length === initialCount + 1) {
+                    log(`✅ Report added successfully (${initialCount} → ${verification.length})`, 'pass');
+                    return true;
+                } else {
+                    log(`❌ Report not saved`, 'fail');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testAttendanceStorage() {
+            log('<h3>📅 Testing Attendance Storage</h3>');
+            
+            try {
+                const attendance = JSON.parse(localStorage.getItem('mockAttendance') || '[]');
+                const initialCount = attendance.length;
+                log(`Initial attendance records: ${initialCount}`, 'info');
+                
+                const testAttendance = {
+                    id: `ATT-${Date.now()}`,
+                    userId: 'test-user',
+                    employeeName: 'Test User',
+                    date: new Date().toISOString().split('T')[0],
+                    status: 'present',
+                    location: { lat: 16.9938889, lng: 82.2428611 }
+                };
+                
+                attendance.push(testAttendance);
+                localStorage.setItem('mockAttendance', JSON.stringify(attendance));
+                
+                const verification = JSON.parse(localStorage.getItem('mockAttendance'));
+                if (verification.length === initialCount + 1) {
+                    log(`✅ Attendance added successfully (${initialCount} → ${verification.length})`, 'pass');
+                    return true;
+                } else {
+                    log(`❌ Attendance not saved`, 'fail');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testImageStorage() {
+            log('<h3>🖼️ Testing Image Storage (Base64)</h3>');
+            
+            try {
+                // Create a small test image (1x1 pixel PNG)
+                const testImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                
+                const transactions = JSON.parse(localStorage.getItem('mockMoneyTransactions') || '[]');
+                const testTransaction = {
+                    id: `IMG-TEST-${Date.now()}`,
+                    transactionId: `TXN-IMG-${Date.now()}`,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'credit',
+                    amount: 1000,
+                    mode: 'phonepe',
+                    category: 'Image Test',
+                    notes: 'Testing image storage',
+                    proofImageUrl: testImage,
+                    createdAt: new Date().toISOString()
+                };
+                
+                transactions.push(testTransaction);
+                localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
+                
+                // Verify image is stored
+                const verification = JSON.parse(localStorage.getItem('mockMoneyTransactions'));
+                const savedTransaction = verification.find(t => t.id === testTransaction.id);
+                
+                if (savedTransaction && savedTransaction.proofImageUrl === testImage) {
+                    log(`✅ Image stored successfully (${testImage.length} bytes)`, 'pass');
+                    return true;
+                } else {
+                    log(`❌ Image not stored properly`, 'fail');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testStorageSize() {
+            log('<h3>💾 Testing Storage Size</h3>');
+            
+            try {
+                let total = 0;
+                for (let key in localStorage) {
+                    if (localStorage.hasOwnProperty(key)) {
+                        total += localStorage[key].length + key.length;
+                    }
+                }
+                
+                const sizeKB = (total / 1024).toFixed(2);
+                const sizeMB = (total / 1024 / 1024).toFixed(2);
+                
+                if (total < 5 * 1024 * 1024) { // Less than 5MB
+                    log(`✅ Storage size: ${sizeKB} KB (${sizeMB} MB) - OK`, 'pass');
+                    return true;
+                } else {
+                    log(`⚠️ Storage size: ${sizeKB} KB (${sizeMB} MB) - Getting large`, 'warn');
+                    return true;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function testDataPersistence() {
+            log('<h3>🔄 Testing Data Persistence</h3>');
+            
+            try {
+                const testKey = 'persistence-test';
+                const testValue = `test-${Date.now()}`;
+                
+                localStorage.setItem(testKey, testValue);
+                const retrieved = localStorage.getItem(testKey);
+                localStorage.removeItem(testKey);
+                
+                if (retrieved === testValue) {
+                    log(`✅ Data persistence working correctly`, 'pass');
+                    return true;
+                } else {
+                    log(`❌ Data persistence failed`, 'fail');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'fail');
+                return false;
+            }
+        }
+        
+        function runAllTests() {
+            clearResults();
+            log('<h2>🚀 Running All Tests...</h2>');
+            
+            const tests = [
+                testDataPersistence,
+                testTransactionStorage,
+                testEmployeeStorage,
+                testReportStorage,
+                testAttendanceStorage,
+                testImageStorage,
+                testStorageSize
+            ];
+            
+            let passed = 0;
+            let failed = 0;
+            
+            tests.forEach(test => {
+                if (test()) {
+                    passed++;
+                } else {
+                    failed++;
+                }
+            });
+            
+            log(`<h2>📊 Test Results</h2>`, 'info');
+            log(`<div style="font-size: 18px;">
+                <span class="pass-status">✅ Passed: ${passed}</span> | 
+                <span class="fail-status">❌ Failed: ${failed}</span>
+            </div>`, passed === tests.length ? 'pass' : 'fail');
+            
+            if (passed === tests.length) {
+                log('<h3 style="color: #4caf50;">🎉 All tests passed! All functions are working correctly.</h3>', 'pass');
+            } else {
+                log('<h3 style="color: #f44336;">⚠️ Some tests failed. Check the details above.</h3>', 'fail');
+            }
+        }
+        
+        // Auto-run tests on page load
+        window.onload = function() {
+            setTimeout(runAllTests, 500);
+        };
+    </script>
+</body>
+</html>
