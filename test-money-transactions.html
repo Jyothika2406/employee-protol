@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Money Transactions & Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .transaction {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .transaction img {
+            max-width: 200px;
+            max-height: 150px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Money Transactions & Image Debug Tool</h1>
+
+    <div class="section">
+        <h2>LocalStorage Status</h2>
+        <div id="storageStatus"></div>
+        <button onclick="checkStorage()">Refresh Storage Info</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+    </div>
+
+    <div class="section">
+        <h2>Money Transactions</h2>
+        <div id="transactionsInfo"></div>
+        <button onclick="loadTransactions()">Load Transactions</button>
+        <button onclick="testAddTransaction()">Add Test Transaction</button>
+        <div id="transactionsList"></div>
+    </div>
+
+    <div class="section">
+        <h2>Test Image Upload</h2>
+        <input type="file" id="testImage" accept="image/*">
+        <button onclick="testImageConversion()">Convert to Base64</button>
+        <div id="imageResult"></div>
+    </div>
+
+    <script>
+        function checkStorage() {
+            const statusDiv = document.getElementById('storageStatus');
+            let html = '';
+
+            // Check localStorage size
+            let totalSize = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    totalSize += localStorage[key].length + key.length;
+                }
+            }
+
+            const maxSize = 5 * 1024 * 1024; // 5MB typical limit
+            const usedPercent = ((totalSize / maxSize) * 100).toFixed(2);
+
+            html += `<div class="info">`;
+            html += `<strong>Total localStorage Size:</strong> ${(totalSize / 1024).toFixed(2)} KB / ${(maxSize / 1024).toFixed(0)} KB<br>`;
+            html += `<strong>Usage:</strong> ${usedPercent}%<br>`;
+            html += `<strong>Keys:</strong> ${Object.keys(localStorage).length}`;
+            html += `</div>`;
+
+            // List all keys
+            html += `<h3>LocalStorage Keys:</h3><ul>`;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    const size = (localStorage[key].length / 1024).toFixed(2);
+                    html += `<li><strong>${key}</strong>: ${size} KB</li>`;
+                }
+            }
+            html += `</ul>`;
+
+            statusDiv.innerHTML = html;
+        }
+
+        function loadTransactions() {
+            const infoDiv = document.getElementById('transactionsInfo');
+            const listDiv = document.getElementById('transactionsList');
+
+            try {
+                const transactionsStr = localStorage.getItem('mockMoneyTransactions');
+                
+                if (!transactionsStr) {
+                    infoDiv.innerHTML = '<div class="info">No transactions found in localStorage</div>';
+                    listDiv.innerHTML = '';
+                    return;
+                }
+
+                const transactions = JSON.parse(transactionsStr);
+                
+                infoDiv.innerHTML = `<div class="success">Found ${transactions.length} transactions</div>`;
+
+                if (transactions.length === 0) {
+                    listDiv.innerHTML = '<p>No transactions to display</p>';
+                    return;
+                }
+
+                let html = '';
+                transactions.forEach((txn, index) => {
+                    html += `<div class="transaction">`;
+                    html += `<strong>Transaction #${index + 1}</strong><br>`;
+                    html += `<strong>ID:</strong> ${txn.id}<br>`;
+                    html += `<strong>Transaction ID:</strong> ${txn.transactionId || 'N/A'}<br>`;
+                    html += `<strong>Date:</strong> ${txn.date}<br>`;
+                    html += `<strong>Type:</strong> ${txn.type}<br>`;
+                    html += `<strong>Amount:</strong> ₹${txn.amount}<br>`;
+                    html += `<strong>Mode:</strong> ${txn.mode}<br>`;
+                    html += `<strong>Category:</strong> ${txn.category || 'N/A'}<br>`;
+                    html += `<strong>Notes:</strong> ${txn.notes || 'N/A'}<br>`;
+                    html += `<strong>Created By:</strong> ${txn.createdByName || 'N/A'} (${txn.createdByRole || 'N/A'})<br>`;
+                    
+                    if (txn.proofImageUrl) {
+                        const imageSize = (txn.proofImageUrl.length / 1024).toFixed(2);
+                        html += `<strong>Proof Image:</strong> Yes (${imageSize} KB)<br>`;
+                        html += `<img src="${txn.proofImageUrl}" alt="Proof" onerror="this.style.border='2px solid red'; this.alt='Failed to load image'">`;
+                    } else {
+                        html += `<strong>Proof Image:</strong> No<br>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+
+                listDiv.innerHTML = html;
+            } catch (error) {
+                infoDiv.innerHTML = `<div class="error">Error loading transactions: ${error.message}</div>`;
+                listDiv.innerHTML = '';
+            }
+        }
+
+        function testAddTransaction() {
+            try {
+                const existingStr = localStorage.getItem('mockMoneyTransactions');
+                const transactions = existingStr ? JSON.parse(existingStr) : [];
+
+                const newTransaction = {
+                    id: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    transactionId: `TXN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'credit',
+                    amount: Math.floor(Math.random() * 10000) + 1000,
+                    mode: 'phonepe',
+                    category: 'Test Payment',
+                    notes: 'Test transaction added at ' + new Date().toLocaleTimeString(),
+                    createdBy: 'test-user',
+                    createdByName: 'Test User',
+                    createdByRole: 'employee',
+                    createdAt: new Date().toISOString()
+                };
+
+                transactions.push(newTransaction);
+                localStorage.setItem('mockMoneyTransactions', JSON.stringify(transactions));
+
+                document.getElementById('transactionsInfo').innerHTML = 
+                    `<div class="success">Test transaction added successfully! Total: ${transactions.length}</div>`;
+                
+                loadTransactions();
+            } catch (error) {
+                document.getElementById('transactionsInfo').innerHTML = 
+                    `<div class="error">Error adding transaction: ${error.message}</div>`;
+            }
+        }
+
+        function testImageConversion() {
+            const fileInput = document.getElementById('testImage');
+            const resultDiv = document.getElementById('imageResult');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select an image first</div>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            resultDiv.innerHTML = '<div class="info">Converting image...</div>';
+
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const base64String = reader.result;
+                const sizeKB = (base64String.length / 1024).toFixed(2);
+
+                let html = `<div class="success">Image converted successfully!</div>`;
+                html += `<div class="info">`;
+                html += `<strong>Original File:</strong> ${file.name}<br>`;
+                html += `<strong>File Size:</strong> ${(file.size / 1024).toFixed(2)} KB<br>`;
+                html += `<strong>Base64 Size:</strong> ${sizeKB} KB<br>`;
+                html += `<strong>Type:</strong> ${file.type}`;
+                html += `</div>`;
+                html += `<h4>Preview:</h4>`;
+                html += `<img src="${base64String}" alt="Preview" style="max-width: 300px; border: 1px solid #ccc; border-radius: 5px;">`;
+                html += `<h4>Base64 String (first 200 chars):</h4>`;
+                html += `<pre>${base64String.substring(0, 200)}...</pre>`;
+
+                resultDiv.innerHTML = html;
+            };
+            reader.onerror = function() {
+                resultDiv.innerHTML = '<div class="error">Failed to read image file</div>';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL localStorage data? This cannot be undone!')) {
+                localStorage.clear();
+                alert('All data cleared!');
+                checkStorage();
+                loadTransactions();
+            }
+        }
+
+        // Load on page load
+        window.onload = function() {
+            checkStorage();
+            loadTransactions();
+        };
+    </script>
+</body>
+</html>

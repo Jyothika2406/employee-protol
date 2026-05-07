@@ -5,7 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'employee' | 'admin' | 'superadmin';
+  role: 'employee' | 'admin' | 'superadmin' | 'ai-developer' | 'telecaller' | 'hr' | 'editor';
 }
 
 interface Employee {
@@ -16,6 +16,7 @@ interface Employee {
   position?: string;
   department?: string;
   password?: string;
+  role?: 'employee' | 'ai-developer' | 'telecaller' | 'hr' | 'editor';
   createdBy?: string;
   createdAt?: string;
 }
@@ -108,7 +109,7 @@ export default function App() {
   });
   const [employeeBankDetails, setEmployeeBankDetails] = useState<any[]>([]);
   const [newEmployee, setNewEmployee] = useState({
-    name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '',
+    name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '', role: 'employee' as 'employee' | 'ai-developer' | 'telecaller' | 'hr' | 'editor',
   });
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [todayDate] = useState(new Date().toISOString().split('T')[0]);
@@ -175,6 +176,7 @@ export default function App() {
     startDate: '',
     endDate: '',
   });
+  const [dashboardFilter, setDashboardFilter] = useState<'today' | 'month'>('month');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -368,7 +370,7 @@ export default function App() {
       }
       await apiClient.addEmployee({...newEmployee, createdBy: user?.id, createdAt: new Date().toISOString()});
       setSuccess('Employee created successfully. Password: ' + newEmployee.password);
-      setNewEmployee({ name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '' });
+      setNewEmployee({ name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '', role: 'employee' });
       loadDashboard();
     } catch (err: any) {
       setError(err.message || 'Failed to add employee');
@@ -388,7 +390,7 @@ export default function App() {
 
   const handleEditEmployee = (emp: Employee) => {
     setEditingEmployee(emp);
-    setNewEmployee({ name: emp.name, email: emp.email, phone: emp.phone, position: emp.position || '', department: emp.department || '', monthlySalary: (emp as any).monthlySalary || '', password: emp.password || '' });
+    setNewEmployee({ name: emp.name, email: emp.email, phone: emp.phone, position: emp.position || '', department: emp.department || '', monthlySalary: (emp as any).monthlySalary || '', password: emp.password || '', role: (emp as any).role || 'employee' });
   };
 
   const handleUpdateEmployee = async (e: React.FormEvent) => {
@@ -406,7 +408,7 @@ export default function App() {
       localStorage.setItem('mockEmployees', JSON.stringify(updated));
       setSuccess('Employee updated successfully.');
       setEditingEmployee(null);
-      setNewEmployee({ name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '' });
+      setNewEmployee({ name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '', role: 'employee' });
       loadDashboard();
     } catch (err: any) {
       setError(err.message || 'Failed to update employee');
@@ -986,8 +988,20 @@ export default function App() {
   const isAdminReadOnly = user?.role === 'admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const isEmployee = user?.role === 'employee';
+  const isAIDeveloper = user?.role === 'ai-developer';
+  const isTelecaller = user?.role === 'telecaller';
+  const isHR = user?.role === 'hr';
+  const isEditor = user?.role === 'editor';
   const visibleTabs = isAdmin
     ? ['dashboard', 'attendance', 'employees', 'reports', 'salary', 'bank', 'money-management', 'company-management', 'settings']
+    : isAIDeveloper
+    ? ['dashboard', 'reports', 'settings']
+    : isTelecaller
+    ? ['dashboard', 'reports', 'settings']
+    : isHR
+    ? ['dashboard', 'employees', 'attendance', 'salary', 'bank', 'settings']
+    : isEditor
+    ? ['dashboard', 'reports', 'settings']
     : ['dashboard', 'attendance', 'reports', 'salary', 'bank', 'money-management', 'settings'];
   const visibleReports = isAdmin
     ? reports
@@ -1202,48 +1216,185 @@ export default function App() {
         {/* DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div>
-              <h2 style={{fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: '800', marginBottom: '32px'}}>Dashboard</h2>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px'}}>
-              <div style={{background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)', color: '#fff', padding: 'clamp(24px, 5vw, 28px)', borderRadius: '16px', textAlign: 'center', boxShadow: '0 12px 28px rgba(31, 41, 55, 0.18)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => {e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 32px rgba(31, 41, 55, 0.25)';}} onMouseLeave={(e) => {e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(31, 41, 55, 0.18)';}}>
-                <p style={{fontSize: '12px', opacity: 0.9, marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px'}}>Total Employees</p>
-                <p style={{fontSize: 'clamp(32px, 8vw, 42px)', fontWeight: '800'}}>{employees.length}</p>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px'}}>
+              <h2 style={{fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: '800', margin: 0, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Dashboard Overview</h2>
+              <div style={{display: 'flex', gap: '12px'}}>
+                <button 
+                  onClick={() => setDashboardFilter('today')}
+                  style={{
+                    padding: '10px 20px', 
+                    background: dashboardFilter === 'today' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#fff', 
+                    border: dashboardFilter === 'today' ? 'none' : '2px solid #e5e7eb', 
+                    borderRadius: '10px', 
+                    cursor: 'pointer', 
+                    fontWeight: '600', 
+                    fontSize: '14px', 
+                    color: dashboardFilter === 'today' ? '#fff' : '#6b7280', 
+                    boxShadow: dashboardFilter === 'today' ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  Today
+                </button>
+                <button 
+                  onClick={() => setDashboardFilter('month')}
+                  style={{
+                    padding: '10px 20px', 
+                    background: dashboardFilter === 'month' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#fff', 
+                    border: dashboardFilter === 'month' ? 'none' : '2px solid #e5e7eb', 
+                    borderRadius: '10px', 
+                    cursor: 'pointer', 
+                    fontWeight: '600', 
+                    fontSize: '14px', 
+                    color: dashboardFilter === 'month' ? '#fff' : '#6b7280', 
+                    boxShadow: dashboardFilter === 'month' ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  This Month
+                </button>
               </div>
-              <div style={{background: 'linear-gradient(135deg, #4338ca 0%, #6366f1 100%)', color: '#fff', padding: 'clamp(24px, 5vw, 28px)', borderRadius: '16px', textAlign: 'center', boxShadow: '0 12px 28px rgba(67, 56, 202, 0.22)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => {e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 32px rgba(67, 56, 202, 0.28)';}} onMouseLeave={(e) => {e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(67, 56, 202, 0.22)';}}>
-                <p style={{fontSize: '12px', opacity: 0.9, marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px'}}>Total Reports</p>
-                <p style={{fontSize: 'clamp(32px, 8vw, 42px)', fontWeight: '800'}}>{visibleReports.length}</p>
+            </div>
+
+            {/* Modern Gradient Cards with Progress Bars */}
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '32px'}}>
+              {/* Card 1 - Purple/Violet Gradient */}
+              <div style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '32px', borderRadius: '20px', boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-8px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                <div style={{position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%'}}></div>
+                <p style={{fontSize: '14px', color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', position: 'relative', zIndex: 1}}>Total Employees</p>
+                <p style={{fontSize: '48px', fontWeight: '900', color: '#fff', marginBottom: '16px', lineHeight: '1', position: 'relative', zIndex: 1}}>{employees.length}</p>
+                <div style={{width: '100%', height: '6px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', overflow: 'hidden', position: 'relative', zIndex: 1}}>
+                  <div style={{width: '90%', height: '100%', background: '#fff', borderRadius: '10px', transition: 'width 1s ease'}}></div>
+                </div>
+                <p style={{fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '8px', position: 'relative', zIndex: 1}}>90% Active</p>
               </div>
-              <div style={{background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)', color: '#fff', padding: 'clamp(24px, 5vw, 28px)', borderRadius: '16px', textAlign: 'center', boxShadow: '0 12px 28px rgba(15, 118, 110, 0.22)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => {e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 32px rgba(15, 118, 110, 0.28)';}} onMouseLeave={(e) => {e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(15, 118, 110, 0.22)';}}>
-                <p style={{fontSize: '12px', opacity: 0.9, marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px'}}>Pending Approvals</p>
-                <p style={{fontSize: 'clamp(32px, 8vw, 42px)', fontWeight: '800'}}>{pendingApprovals.length}</p>
+
+              {/* Card 2 - Cyan/Blue Gradient */}
+              <div style={{background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', padding: '32px', borderRadius: '20px', boxShadow: '0 20px 40px rgba(6, 182, 212, 0.3)', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-8px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                <div style={{position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%'}}></div>
+                <p style={{fontSize: '14px', color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', position: 'relative', zIndex: 1}}>Total Reports</p>
+                <p style={{fontSize: '48px', fontWeight: '900', color: '#fff', marginBottom: '16px', lineHeight: '1', position: 'relative', zIndex: 1}}>{visibleReports.length}</p>
+                <div style={{width: '100%', height: '6px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', overflow: 'hidden', position: 'relative', zIndex: 1}}>
+                  <div style={{width: '30%', height: '100%', background: '#fff', borderRadius: '10px', transition: 'width 1s ease'}}></div>
+                </div>
+                <p style={{fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '8px', position: 'relative', zIndex: 1}}>30% This Week</p>
               </div>
-              <div style={{background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)', color: '#fff', padding: 'clamp(24px, 5vw, 28px)', borderRadius: '16px', textAlign: 'center', boxShadow: '0 12px 28px rgba(30, 58, 138, 0.22)', transition: 'transform 0.3s, box-shadow 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => {e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 16px 32px rgba(30, 58, 138, 0.28)';}} onMouseLeave={(e) => {e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(30, 58, 138, 0.22)';}}>
-                <p style={{fontSize: '12px', opacity: 0.9, marginBottom: '8px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px'}}>Your Role</p>
-                <p style={{fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: '800'}}>{user ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}</p>
+
+              {/* Card 3 - Orange/Red Gradient */}
+              <div style={{background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)', padding: '32px', borderRadius: '20px', boxShadow: '0 20px 40px rgba(245, 158, 11, 0.3)', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-8px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                <div style={{position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%'}}></div>
+                <p style={{fontSize: '14px', color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', position: 'relative', zIndex: 1}}>Pending Approvals</p>
+                <p style={{fontSize: '48px', fontWeight: '900', color: '#fff', marginBottom: '16px', lineHeight: '1', position: 'relative', zIndex: 1}}>{pendingApprovals.length}</p>
+                <div style={{width: '100%', height: '6px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', overflow: 'hidden', position: 'relative', zIndex: 1}}>
+                  <div style={{width: '70%', height: '100%', background: '#fff', borderRadius: '10px', transition: 'width 1s ease'}}></div>
+                </div>
+                <p style={{fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '8px', position: 'relative', zIndex: 1}}>70% Urgent</p>
+              </div>
+
+              {/* Card 4 - Green Gradient */}
+              <div style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '32px', borderRadius: '20px', boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s', cursor: 'pointer'}} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-8px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                <div style={{position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%'}}></div>
+                <p style={{fontSize: '14px', color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', position: 'relative', zIndex: 1}}>Your Role</p>
+                <p style={{fontSize: '36px', fontWeight: '900', color: '#fff', marginBottom: '16px', lineHeight: '1', position: 'relative', zIndex: 1}}>{user ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}</p>
+                <div style={{width: '100%', height: '6px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', overflow: 'hidden', position: 'relative', zIndex: 1}}>
+                  <div style={{width: '100%', height: '100%', background: '#fff', borderRadius: '10px', transition: 'width 1s ease'}}></div>
+                </div>
+                <p style={{fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '8px', position: 'relative', zIndex: 1}}>Full Access</p>
               </div>
             </div>
 
             {isAdmin && (
-              <div style={{marginTop: '24px'}}>
-                <h3 style={{fontSize: '20px', fontWeight: '900', marginBottom: '14px', color: '#1e3a8a'}}>Company Revenue Analytics</h3>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px'}}>
-                  <div style={{padding: '20px', borderRadius: '14px', background: '#ffffff', border: '1px solid #ccfbf1', boxShadow: '0 10px 20px rgba(15, 118, 110, 0.08)'}}>
-                    <p style={{fontSize: '11px', fontWeight: '800', color: '#0f766e', textTransform: 'uppercase', marginBottom: '8px'}}>Total Revenue</p>
-                    <p style={{fontSize: '28px', fontWeight: '900', color: '#115e59'}}>Rs {moneyTotals.totalCredit.toLocaleString()}</p>
-                  </div>
-                  <div style={{padding: '20px', borderRadius: '14px', background: '#ffffff', border: '1px solid #fecaca', boxShadow: '0 10px 20px rgba(220, 38, 38, 0.08)'}}>
-                    <p style={{fontSize: '11px', fontWeight: '800', color: '#dc2626', textTransform: 'uppercase', marginBottom: '8px'}}>Total Expense</p>
-                    <p style={{fontSize: '28px', fontWeight: '900', color: '#b91c1c'}}>Rs {expenseTotals.totalExpenses.toLocaleString()}</p>
-                  </div>
-                  <div style={{padding: '20px', borderRadius: '14px', background: '#ffffff', border: '1px solid #c7d2fe', boxShadow: '0 10px 20px rgba(67, 56, 202, 0.12)'}}>
-                    <p style={{fontSize: '11px', fontWeight: '800', color: '#4338ca', textTransform: 'uppercase', marginBottom: '8px'}}>Net Profit</p>
-                    <p style={{fontSize: '28px', fontWeight: '900', color: '#3730a3'}}>Rs {(moneyTotals.totalCredit - expenseTotals.totalExpenses).toLocaleString()}</p>
-                  </div>
-                  <div style={{padding: '20px', borderRadius: '14px', background: '#ffffff', border: '1px solid #dbeafe', boxShadow: '0 10px 20px rgba(29, 78, 216, 0.1)'}}>
-                    <p style={{fontSize: '11px', fontWeight: '800', color: '#1d4ed8', textTransform: 'uppercase', marginBottom: '8px'}}>Today Revenue / Expense</p>
-                    <p style={{fontSize: '22px', fontWeight: '900', color: '#1e3a8a'}}>Rs {todayMoneyTotals.credit.toLocaleString()} / Rs {todayExpenses.toLocaleString()}</p>
+              <>
+                {/* Revenue Analytics with Circular Progress */}
+                <div style={{background: '#fff', padding: '32px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', marginBottom: '32px'}}>
+                  <h3 style={{fontSize: '24px', fontWeight: '800', marginBottom: '24px', color: '#1f2937'}}>Revenue Analytics</h3>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px'}}>
+                    {/* Circular Progress 1 - Total Revenue */}
+                    <div style={{textAlign: 'center'}}>
+                      <div style={{position: 'relative', width: '140px', height: '140px', margin: '0 auto 16px'}}>
+                        <svg width="140" height="140" style={{transform: 'rotate(-90deg)'}}>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="#e5e7eb" strokeWidth="12"/>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#gradient1)" strokeWidth="12" strokeDasharray="377" strokeDashoffset="75" strokeLinecap="round" style={{transition: 'stroke-dashoffset 1s ease'}}/>
+                          <defs>
+                            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#667eea"/>
+                              <stop offset="100%" stopColor="#764ba2"/>
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center'}}>
+                          <p style={{fontSize: '28px', fontWeight: '900', color: '#667eea', margin: 0}}>60%</p>
+                        </div>
+                      </div>
+                      <p style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', marginBottom: '4px'}}>Total Revenue</p>
+                      <p style={{fontSize: '20px', fontWeight: '900', color: '#667eea'}}>₹{moneyTotals.totalCredit.toLocaleString()}</p>
+                    </div>
+
+                    {/* Circular Progress 2 - Total Expense */}
+                    <div style={{textAlign: 'center'}}>
+                      <div style={{position: 'relative', width: '140px', height: '140px', margin: '0 auto 16px'}}>
+                        <svg width="140" height="140" style={{transform: 'rotate(-90deg)'}}>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="#e5e7eb" strokeWidth="12"/>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#gradient2)" strokeWidth="12" strokeDasharray="377" strokeDashoffset="151" strokeLinecap="round" style={{transition: 'stroke-dashoffset 1s ease'}}/>
+                          <defs>
+                            <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#f59e0b"/>
+                              <stop offset="100%" stopColor="#ef4444"/>
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center'}}>
+                          <p style={{fontSize: '28px', fontWeight: '900', color: '#f59e0b', margin: 0}}>40%</p>
+                        </div>
+                      </div>
+                      <p style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', marginBottom: '4px'}}>Total Expense</p>
+                      <p style={{fontSize: '20px', fontWeight: '900', color: '#f59e0b'}}>₹{expenseTotals.totalExpenses.toLocaleString()}</p>
+                    </div>
+
+                    {/* Circular Progress 3 - Net Profit */}
+                    <div style={{textAlign: 'center'}}>
+                      <div style={{position: 'relative', width: '140px', height: '140px', margin: '0 auto 16px'}}>
+                        <svg width="140" height="140" style={{transform: 'rotate(-90deg)'}}>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="#e5e7eb" strokeWidth="12"/>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#gradient3)" strokeWidth="12" strokeDasharray="377" strokeDashoffset="113" strokeLinecap="round" style={{transition: 'stroke-dashoffset 1s ease'}}/>
+                          <defs>
+                            <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#10b981"/>
+                              <stop offset="100%" stopColor="#059669"/>
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center'}}>
+                          <p style={{fontSize: '28px', fontWeight: '900', color: '#10b981', margin: 0}}>70%</p>
+                        </div>
+                      </div>
+                      <p style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', marginBottom: '4px'}}>Net Profit</p>
+                      <p style={{fontSize: '20px', fontWeight: '900', color: '#10b981'}}>₹{(moneyTotals.totalCredit - expenseTotals.totalExpenses).toLocaleString()}</p>
+                    </div>
+
+                    {/* Circular Progress 4 - Today's Revenue */}
+                    <div style={{textAlign: 'center'}}>
+                      <div style={{position: 'relative', width: '140px', height: '140px', margin: '0 auto 16px'}}>
+                        <svg width="140" height="140" style={{transform: 'rotate(-90deg)'}}>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="#e5e7eb" strokeWidth="12"/>
+                          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#gradient4)" strokeWidth="12" strokeDasharray="377" strokeDashoffset="189" strokeLinecap="round" style={{transition: 'stroke-dashoffset 1s ease'}}/>
+                          <defs>
+                            <linearGradient id="gradient4" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#06b6d4"/>
+                              <stop offset="100%" stopColor="#3b82f6"/>
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center'}}>
+                          <p style={{fontSize: '28px', fontWeight: '900', color: '#06b6d4', margin: 0}}>50%</p>
+                        </div>
+                      </div>
+                      <p style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', marginBottom: '4px'}}>Today's Revenue</p>
+                      <p style={{fontSize: '20px', fontWeight: '900', color: '#06b6d4'}}>₹{todayMoneyTotals.credit.toLocaleString()}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}
@@ -1380,6 +1531,13 @@ export default function App() {
                   <input type="email" placeholder="Email *" value={newEmployee.email} onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})} style={{padding: '12px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box'}} required />
                   <input type="tel" placeholder="Phone *" value={newEmployee.phone} onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})} style={{padding: '12px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box'}} required />
                   {!editingEmployee && <input type="password" placeholder="Password *" value={newEmployee.password} onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})} style={{padding: '12px 14px', border: '2px solid #667eea', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box', backgroundColor: '#f0f4ff'}} required pattern=".{6,}" title="Password must be at least 6 characters" />}
+                  <select value={newEmployee.role} onChange={(e) => setNewEmployee({...newEmployee, role: e.target.value as 'employee' | 'ai-developer' | 'telecaller' | 'hr' | 'editor'})} style={{padding: '12px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box', background: '#fff'}}>
+                    <option value="employee">Employee</option>
+                    <option value="ai-developer">AI Developer</option>
+                    <option value="telecaller">Telecaller</option>
+                    <option value="hr">HR</option>
+                    <option value="editor">Editor</option>
+                  </select>
                   <input type="text" placeholder="Position" value={newEmployee.position} onChange={(e) => setNewEmployee({...newEmployee, position: e.target.value})} style={{padding: '12px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box'}} />
                   <input type="text" placeholder="Department" value={newEmployee.department} onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})} style={{padding: '12px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box'}} />
                   <input type="number" placeholder="Monthly Salary (₹)" value={newEmployee.monthlySalary} onChange={(e) => setNewEmployee({...newEmployee, monthlySalary: e.target.value})} style={{padding: '12px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', transition: 'all 0.3s', boxSizing: 'border-box'}} />
@@ -1388,7 +1546,7 @@ export default function App() {
                   <button type="submit" style={{padding: '12px 28px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '14px', transition: 'all 0.3s'}}>
                     {editingEmployee ? 'Update Employee' : 'Add Employee'}
                   </button>
-                  {editingEmployee && <button type="button" onClick={() => {setEditingEmployee(null); setNewEmployee({ name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '' });}} style={{padding: '12px 28px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '14px'}}>Cancel</button>}
+                  {editingEmployee && <button type="button" onClick={() => {setEditingEmployee(null); setNewEmployee({ name: '', email: '', phone: '', position: '', department: '', monthlySalary: '', password: '', role: 'employee' });}} style={{padding: '12px 28px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '14px'}}>Cancel</button>}
                 </div>
               </form>
             </div>
@@ -1404,25 +1562,50 @@ export default function App() {
                         <th style={{textAlign: 'left', padding: '16px', fontWeight: '700', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Name</th>
                         <th style={{textAlign: 'left', padding: '16px', fontWeight: '700', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Email</th>
                         <th style={{textAlign: 'left', padding: '16px', fontWeight: '700', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Phone</th>
+                        <th style={{textAlign: 'left', padding: '16px', fontWeight: '700', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Role</th>
                         <th style={{textAlign: 'left', padding: '16px', fontWeight: '700', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Position</th>
                         <th style={{textAlign: 'left', padding: '16px', fontWeight: '700', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {employees.map((emp) => (
-                        <tr key={emp.id} style={{borderBottom: '1px solid #e5e7eb'}}>
-                          <td style={{padding: '16px', fontSize: '14px', fontWeight: '600'}}>{emp.name}</td>
-                          <td style={{padding: '16px', fontSize: '14px'}}>{emp.email}</td>
-                          <td style={{padding: '16px', fontSize: '14px'}}>{emp.phone}</td>
-                          <td style={{padding: '16px', fontSize: '14px'}}>{emp.position || '-'}</td>
-                          <td style={{padding: '16px'}}>
-                            <div style={{display: 'flex', gap: '8px'}}>
-                              <button onClick={() => handleEditEmployee(emp)} style={{padding: '8px 12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}>Edit</button>
-                              <button onClick={() => handleDeleteEmployee(emp.id)} style={{padding: '8px 12px', background: '#6b7280', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}>Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {employees.map((emp) => {
+                        const empRole = (emp as any).role || 'employee';
+                        const roleColors = {
+                          'employee': { bg: '#f3f4f6', text: '#4b5563', label: 'Employee' },
+                          'ai-developer': { bg: '#dbeafe', text: '#1e40af', label: 'AI Developer' },
+                          'telecaller': { bg: '#fef3c7', text: '#92400e', label: 'Telecaller' },
+                          'hr': { bg: '#dcfce7', text: '#166534', label: 'HR' },
+                          'editor': { bg: '#fce7f3', text: '#9f1239', label: 'Editor' }
+                        };
+                        const roleStyle = roleColors[empRole as keyof typeof roleColors] || roleColors.employee;
+                        
+                        return (
+                          <tr key={emp.id} style={{borderBottom: '1px solid #e5e7eb'}}>
+                            <td style={{padding: '16px', fontSize: '14px', fontWeight: '600'}}>{emp.name}</td>
+                            <td style={{padding: '16px', fontSize: '14px'}}>{emp.email}</td>
+                            <td style={{padding: '16px', fontSize: '14px'}}>{emp.phone}</td>
+                            <td style={{padding: '16px', fontSize: '14px'}}>
+                              <span style={{
+                                padding: '4px 12px', 
+                                borderRadius: '999px', 
+                                fontSize: '12px', 
+                                fontWeight: '700',
+                                background: roleStyle.bg,
+                                color: roleStyle.text
+                              }}>
+                                {roleStyle.label}
+                              </span>
+                            </td>
+                            <td style={{padding: '16px', fontSize: '14px'}}>{emp.position || '-'}</td>
+                            <td style={{padding: '16px'}}>
+                              <div style={{display: 'flex', gap: '8px'}}>
+                                <button onClick={() => handleEditEmployee(emp)} style={{padding: '8px 12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}>Edit</button>
+                                <button onClick={() => handleDeleteEmployee(emp.id)} style={{padding: '8px 12px', background: '#6b7280', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}>Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1437,7 +1620,7 @@ export default function App() {
             <h2 style={{fontSize: '28px', fontWeight: '800', marginBottom: '32px'}}>Daily Reports</h2>
             
             {/* Employee Submit Report */}
-            {user?.role === 'employee' && (
+            {(user?.role === 'employee' || user?.role === 'ai-developer' || user?.role === 'telecaller' || user?.role === 'editor') && (
               <div style={{background: '#fff', padding: '32px', borderRadius: '16px', marginBottom: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.08)'}}>
                 <h3 style={{fontSize: '20px', fontWeight: '800', marginBottom: '20px'}}>Submit Daily Report</h3>
                 <form onSubmit={handleAddReport}>
