@@ -22,6 +22,25 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize Firebase
 initializeFirebase();
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Employee Portal Backend API',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      employees: '/api/employees',
+      reports: '/api/reports',
+      attendance: '/api/attendance',
+      salary: '/api/salary',
+      bank: '/api/bank',
+      logs: '/api/logs'
+    }
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
@@ -34,6 +53,16 @@ app.use('/api/logs', logRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Backend is running!' });
+});
+
+// 404 handler - must be after all routes
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    path: req.path,
+    method: req.method,
+    message: 'The requested endpoint does not exist. Check /api/health for available endpoints.'
+  });
 });
 
 // Error handler
